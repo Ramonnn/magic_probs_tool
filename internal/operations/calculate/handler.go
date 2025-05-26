@@ -3,19 +3,10 @@ package calculate
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 )
-
-type CalculateRequest struct {
-	Cards []string `json:"cards"`
-}
-
-type CalculateResponse struct {
-	Probabilities map[string][]CardProbability `json:"probabilities"`
-	CardData      any                          `json:"cardData"`
-	Error         string                       `json:"error,omitempty"`
-}
 
 func calculateHandler(probService *ProbabilitiesService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +18,7 @@ func calculateHandler(probService *ProbabilitiesService) http.HandlerFunc {
 			return
 		}
 
-		cardProbabilities, cardData, err := probService.GetCardProbabilities(ctx, req.Cards)
+		cardProbabilities, err := probService.GetCardProbabilities(ctx, req.Cards)
 		if err != nil {
 			log.Printf("calculation error: %v", err)
 			json.NewEncoder(w).Encode(CalculateResponse{Error: err.Error()})
@@ -36,23 +27,38 @@ func calculateHandler(probService *ProbabilitiesService) http.HandlerFunc {
 
 		// Flatten to map[cardID][]CardProbability
 		flatProbs := make(map[string][]CardProbability)
-		for boosterName, cardMap := range cardProbabilities {
+		for _, cardMap := range cardProbabilities {
 			for cardID, probList := range cardMap {
-				for _, p := range probList {
-					entry := CardProbability{
-						Probability: p.Probability,
-						IsFoil:      p.IsFoil,
-						SetCode:     p.SetCode,
-						BoosterName: boosterName, // NEW FIELD
-					}
-					flatProbs[cardID] = append(flatProbs[cardID], entry)
-				}
+				flatProbs[cardID] = append(flatProbs[cardID], probList...)
 			}
 		}
 
+		// Create a slice of Row for aggregation
+		var allRows []Row
+		for _, probs := range flatProbs {
+			for _, p := range probs {
+				allRows = append(allRows, Row{
+					Booster:     p.BoosterName,
+					Foil:        p.IsFoil,
+					Probability: p.Probability,
+				})
+			}
+		}
+
+		// Aggregate by booster
+		aggByBooster := AggregateBy(allRows, func(r Row) string {
+			return r.Booster
+		})
+
+		// Aggregate by booster+foil
+		aggByBoosterFoil := AggregateBy(allRows, func(r Row) string {
+			return r.Booster + "|" + fmt.Sprint(r.Foil)
+		})
+
 		json.NewEncoder(w).Encode(CalculateResponse{
-			Probabilities: flatProbs,
-			CardData:      cardData,
+			Probabilities:       flatProbs,
+			AggregatedByBooster: aggByBooster,
+			AggregatedByFoil:    aggByBoosterFoil,
 		})
 	}
 }

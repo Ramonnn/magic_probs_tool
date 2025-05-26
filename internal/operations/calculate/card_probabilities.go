@@ -3,12 +3,14 @@ package calculate
 import (
 	"errors"
 	"go_magic_probs_tool/internal/boosters"
+	"go_magic_probs_tool/internal/cards"
 	"go_magic_probs_tool/internal/sheets"
 )
 
 func CalculateCardProbabilities(
 	sheets map[string]map[string][]sheets.BoosterSheetEntry,
 	boosters []boosters.BoosterVariant,
+	cardData map[string][]cards.CardData,
 ) (map[string]map[string][]CardProbability, error) {
 	cardProbabilities := make(map[string]map[string][]CardProbability)
 
@@ -18,6 +20,7 @@ func CalculateCardProbabilities(
 		sheetPicks := booster.SheetPicks
 		boosterProbability := booster.BoosterProbability
 		setCode := booster.SetCode
+		boosterIndex := booster.BoosterIndex
 
 		// Defensive check for sheet existence
 		if _, exists := sheets[sheetName]; !exists {
@@ -35,18 +38,29 @@ func CalculateCardProbabilities(
 					continue
 				}
 
-				// Initialize inner map if nil to avoid panic
-				if cardProbabilities[boosterName] == nil {
-					cardProbabilities[boosterName] = make(map[string][]CardProbability)
+				cardProbability := entry.CardProbability * float64(sheetPicks) * boosterProbability
+
+				// Default empty slices
+				var promoTypes []string
+				var frameEffects []string
+
+				if variants, ok := cardData[cardID]; ok && len(variants) > 0 {
+					promoTypes = variants[0].PromoTypes
+					frameEffects = variants[0].FrameEffects
 				}
 
-				cardProbability := entry.CardProbability * float64(sheetPicks) * boosterProbability
 				cardProbabilities[boosterName][cardID] = append(
 					cardProbabilities[boosterName][cardID],
 					CardProbability{
-						Probability: cardProbability,
-						IsFoil:      entry.IsFoil,
-						SetCode:     setCode,
+						Probability:    cardProbability,
+						IsFoil:         entry.IsFoil,
+						SetCode:        setCode,
+						PromoTypes:     promoTypes,
+						FrameEffects:   frameEffects,
+						BoosterName:    boosterName,
+						SheetName:      sheetName,
+						SheetPicks:     sheetPicks,
+						BoosterVariant: boosterIndex,
 					},
 				)
 			}

@@ -2,6 +2,7 @@ package boosters
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"go_magic_probs_tool/internal/database"
 	"time"
@@ -55,9 +56,10 @@ func (r *BoosterRepository) FetchBoosterVariants(ctx context.Context, setCodes, 
 	var variants []BoosterVariant
 	for rows.Next() {
 		var variant BoosterVariant
+		var boosterIndex sql.NullInt32
 		if err := rows.Scan(
 			&variant.BoosterName,
-			&variant.BoosterIndex,
+			&boosterIndex,
 			&variant.SetCode,
 			&variant.SheetName,
 			&variant.SheetPicks,
@@ -66,7 +68,15 @@ func (r *BoosterRepository) FetchBoosterVariants(ctx context.Context, setCodes, 
 		); err != nil {
 			return nil, err
 		}
+
+		if boosterIndex.Valid {
+			i := int(boosterIndex.Int32)
+			variant.BoosterIndex = &i
+		} else {
+			variant.BoosterIndex = nil
+		}
 		variants = append(variants, variant)
+
 	}
 
 	fmt.Printf("FetchBoosterVariants Total Execution Time: %v\n", time.Since(start))

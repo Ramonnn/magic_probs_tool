@@ -17,6 +17,14 @@ func NewCardRepository(db *database.DatabaseHandler) *CardRepository {
 	return &CardRepository{db: db}
 }
 
+func splitAndTrim(s string) []string {
+	parts := strings.Split(s, ",")
+	for i := range parts {
+		parts[i] = strings.TrimSpace(parts[i])
+	}
+	return parts
+}
+
 // FetchCardData fetches card data for the given card names in chunks to avoid too many placeholders.
 func (r *CardRepository) FetchCardData(ctx context.Context, cardNames []string, chunkSize int) (map[string][]CardData, error) {
 	start := time.Now() // Start timing
@@ -63,17 +71,17 @@ func (r *CardRepository) FetchCardData(ctx context.Context, cardNames []string, 
 			}
 
 			if frameEffects.Valid && frameEffects.String != "" {
-				parts := strings.Split(frameEffects.String, ",")
-				c.FrameEffects = &parts
+				parts := splitAndTrim(frameEffects.String)
+				c.FrameEffects = parts
 			} else {
-				c.FrameEffects = &[]string{}
+				c.FrameEffects = []string{}
 			}
 
 			if promoTypes.Valid && promoTypes.String != "" {
-				parts := strings.Split(promoTypes.String, ",")
-				c.PromoTypes = &parts
+				parts := splitAndTrim(promoTypes.String)
+				c.PromoTypes = parts
 			} else {
-				c.PromoTypes = &[]string{}
+				c.PromoTypes = []string{}
 			}
 
 			cards[c.UUID] = append(cards[c.UUID], c)

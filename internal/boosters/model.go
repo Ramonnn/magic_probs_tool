@@ -2,11 +2,11 @@ package boosters
 
 // BoosterVariant represents a booster variant and its associated probabilities.
 type BoosterVariant struct {
-	BoosterName        string
-	BoosterIndex       *int
-	SetCode            string
-	SheetName          string
-	SheetPicks         int
-	BoosterWeight      float64
-	BoosterProbability float64
+	BoosterName        string  `json:"boosterName"`
+	BoosterIndex       *int    `json:"boosterIndex"`
+	SetCode            string  `json:"setCode"`
+	SheetName          string  `json:"sheetName"`
+	SheetPicks         int     `json:"sheetPicks"`
+	BoosterWeight      float64 `json:"boosterWeight"`
+	BoosterProbability float64 `json:"boosterProbability"`
 }
