@@ -4,6 +4,10 @@ import (
 	"context"
 )
 
+type CardFetcher interface {
+	FetchCardData(ctx context.Context, cardNames []string, limit int) (map[string][]CardData, error)
+}
+
 // CardService handles booster-related operations
 type CardService struct {
 	Fetcher CardFetcher
@@ -16,6 +20,6 @@ func NewCardService(fetcher CardFetcher) *CardService {
 	}
 }
 
-func (s *CardService) FetchCardData(ctx context.Context, cardNames []string, batchSize int) (map[string]CardData, error) {
+func (s *CardService) FetchCardData(ctx context.Context, cardNames []string, batchSize int) (map[string][]CardData, error) {
 	return s.Fetcher.FetchCardData(ctx, cardNames, batchSize)
 }

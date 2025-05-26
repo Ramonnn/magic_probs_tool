@@ -18,14 +18,14 @@ func NewCardRepository(db *database.DatabaseHandler) *CardRepository {
 }
 
 // FetchCardData fetches card data for the given card names in chunks to avoid too many placeholders.
-func (r *CardRepository) FetchCardData(ctx context.Context, cardNames []string, chunkSize int) (map[string]CardData, error) {
+func (r *CardRepository) FetchCardData(ctx context.Context, cardNames []string, chunkSize int) (map[string][]CardData, error) {
 	start := time.Now() // Start timing
 
 	if len(cardNames) == 0 {
-		return map[string]CardData{}, nil
+		return map[string][]CardData{}, nil
 	}
 
-	cards := make(map[string]CardData)
+	cards := make(map[string][]CardData)
 
 	for start := 0; start < len(cardNames); start += chunkSize {
 		end := start + chunkSize
@@ -76,7 +76,7 @@ func (r *CardRepository) FetchCardData(ctx context.Context, cardNames []string, 
 				c.PromoTypes = &[]string{}
 			}
 
-			cards[c.UUID] = c
+			cards[c.UUID] = append(cards[c.UUID], c)
 		}
 
 		rows.Close()
