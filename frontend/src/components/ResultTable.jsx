@@ -1,8 +1,11 @@
+import DrilldownView from "./DrilldownView";
+
 function ResultTable({ data }) {
   if (!data?.probabilities) return <p>No data.</p>;
 
   const aggregatedByBooster = data.aggregatedByBooster || {};
   const aggregatedByBoosterFoil = data.aggregatedByFoil || {};
+  const aggregatedByBoosterSet = data.aggregatedBySet || {};
   const renderList = (list) => Array.isArray(list) ? list.join(", ") : "";
 
   const renderAggregates = () => {
@@ -11,6 +14,26 @@ function ResultTable({ data }) {
         <h3 className="text-md font-bold text-blue-800 mb-2">Aggregated Probabilities</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 className="text-sm font-semibold text-blue-700 mb-1">By Booster</h4>
+            <table className="w-full text-sm border-collapse">
+              <thead className="bg-blue-50">
+                <tr>
+                  <th className="p-2 text-left border-b">Set + Booster</th>
+                  <th className="p-2 text-left border-b">Total Probability</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(aggregatedByBoosterSet).map(([booster, prob]) => (
+                  <tr key={booster}>
+                    <td className="p-2 border-b">{booster}</td>
+                    <td className="p-2 border-b">{(prob * 100).toFixed(4)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
           <div>
             <h4 className="text-sm font-semibold text-blue-700 mb-1">By Booster</h4>
             <table className="w-full text-sm border-collapse">
@@ -58,6 +81,14 @@ function ResultTable({ data }) {
   return (
     <div className="overflow-x-auto animate-fade-in transition-opacity duration-700 ease-out">
       {renderAggregates()}
+
+      {data.drilldown && (
+        <div className="mt-6">
+          <h3 className="text-md font-bold text-blue-800 mb-2">Drilldown by Set & Booster</h3>
+          <DrilldownView drilldown={data.drilldown} />
+        </div>
+      )}
+
       <table className="w-full mt-4 table-auto border-collapse rounded-lg shadow-md">
         <thead className="bg-blue-100 text-left text-sm font-semibold text-blue-800">
           <tr>
