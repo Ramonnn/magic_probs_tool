@@ -19,10 +19,10 @@ func NewProbabilitiesService(cardFetcher cards.CardFetcher, boosterFetcher boost
 	return &ProbabilitiesService{cardFetcher: cardFetcher, boosterFetcher: boosterFetcher, sheetFetcher: sheetFetcher}
 }
 
-func (s *ProbabilitiesService) GetCardProbabilities(ctx context.Context, cardNames []string) (map[string]map[string][]CardProbability, map[string]cards.CardData, error) {
+func (s *ProbabilitiesService) GetCardProbabilities(ctx context.Context, cardNames []string) (map[string]map[string][]CardProbability, error) {
 	cardData, err := s.cardFetcher.FetchCardData(ctx, cardNames, 500)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	var cardUUIDs []string
@@ -32,20 +32,20 @@ func (s *ProbabilitiesService) GetCardProbabilities(ctx context.Context, cardNam
 
 	boosterSheets, err := s.sheetFetcher.FetchBoosterSheets(ctx, nil, nil, cardUUIDs)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	setCodes := sheets.ExtractSetCodesFromSheets(boosterSheets)
 
 	boosters, err := s.boosterFetcher.FetchBoosterVariants(ctx, setCodes, nil)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	cardProbabilities, err := CalculateCardProbabilities(boosterSheets, boosters)
+	cardProbabilities, err := CalculateCardProbabilities(boosterSheets, boosters, cardData)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return cardProbabilities, cardData, nil
+	return cardProbabilities, nil
 }
